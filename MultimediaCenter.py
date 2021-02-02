@@ -6,6 +6,7 @@ import os
 import sys
 
 from photo import AppPhoto
+from music import MusicWindow
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -107,7 +108,7 @@ class MainWindow(QMainWindow):
 
         win_btn = QAction(QIcon("iconos/musicplay.png"), "Open Music Player", self)
         win_btn.setStatusTip("Open MusicPlayer")
-        win_btn.triggered.connect(self.new_win)
+        win_btn.triggered.connect(self.new_winMusic)
         tb.addAction(win_btn)
 
         tb.addSeparator()
@@ -154,6 +155,11 @@ class MainWindow(QMainWindow):
         windo = AppPhoto()
         windo.show()
     
+    #to open Music window
+    def new_winMusic(self):
+        windo = MusicWindow()
+        windo.show()
+    
     #to open another window
     def new_win(self):
         pass
@@ -187,6 +193,16 @@ class MainWindow(QMainWindow):
     #change status
     def if_link_hover(self, l):
         self.status.showMessage(l)
+
+    def closeEvent(self,event):
+        reply = QMessageBox.question(self,'Message','Pres Yes to Close.',QMessageBox.Yes|QMessageBox.No,QMessageBox.Yes)
+        if reply == QMessageBox.Yes :
+            qApp.quit()
+        else :
+            try:
+                event.ignore()
+            except AttributeError:
+                pass
 
 #usual
 app=QApplication(sys.argv)
