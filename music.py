@@ -1,7 +1,4 @@
-'''
-Documentation, License etc.
-@package music_player
-'''
+
 import sys
 from os.path import expanduser
 from PyQt5.QtWidgets import *
