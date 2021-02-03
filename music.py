@@ -8,6 +8,7 @@ from PyQt5.QtCore import *
 class MusicWindow(QMainWindow):
 	def __init__(self):
 		super().__init__()
+		self.setWindowTitle("Media Player")
 	
 		self.currentFile = '/KarolG-Bichota.mp3'
 		self.currentPlaylist = QMediaPlaylist()

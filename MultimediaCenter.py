@@ -7,6 +7,7 @@ import sys
 
 from photo import AppPhoto
 from music import MusicWindow
+from video import VideoWindow
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -63,7 +64,7 @@ class MainWindow(QMainWindow):
 
         msn_btn = QAction(QIcon("iconos/blim.png"), "Bim", self)
         msn_btn.setStatusTip("Go to Blim")
-        msn_btn.triggered.connect(lambda: self.conn("https://msn.com"))
+        msn_btn.triggered.connect(lambda: self.conn("https://www.blim.com/cuenta/ingresar"))
         tb2.addAction(msn_btn)
 
         msn_btn = QAction(QIcon("iconos/spoti.png"), "Spotify", self)
@@ -103,7 +104,7 @@ class MainWindow(QMainWindow):
 
         win_btn = QAction(QIcon("iconos/videoplay.png"), "Open Video Player", self)
         win_btn.setStatusTip("Open VideoPlayer")
-        win_btn.triggered.connect(self.new_win)
+        win_btn.triggered.connect(self.new_winVideo)
         tb.addAction(win_btn)
 
         win_btn = QAction(QIcon("iconos/musicplay.png"), "Open Music Player", self)
@@ -160,9 +161,14 @@ class MainWindow(QMainWindow):
         windo = MusicWindow()
         windo.show()
     
-    #to open another window
+    #to open Video window
+    def new_winVideo(self):
+        self.windo = VideoWindow()
+        self.windo.show()
+        self.windo.resize(640, 480)
+    
     def new_win(self):
-        pass
+        self 
 
     #edit URL bar
     def update_url(self,q):
