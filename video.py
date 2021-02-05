@@ -16,7 +16,7 @@ class VideoWindow(QMainWindow):
     """
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Media Player")
+        self.setWindowTitle("Video Player")
 
         # creating a basic vlc instance
         self.instance = vlc.Instance()

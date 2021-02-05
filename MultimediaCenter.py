@@ -2,6 +2,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtWebEngineWidgets import *
+from PyQt5 import QtWebEngineWidgets, QtCore
 import os
 import sys
 
@@ -20,8 +21,9 @@ class MainWindow(QMainWindow):
         #creating mainwindow page
         self.browser=QWebEngineView(loadProgress=self.pbar.setValue, loadFinished=self.pbar.hide,
                                   loadStarted=self.pbar.show, titleChanged=self.setWindowTitle)
-        self.browser.setUrl(QUrl("http://www.google.com"))
+        self.browser.load(QUrl.fromLocalFile(os.path.split(os.path.abspath(__file__))[0]+r'/index.html'))
         self.setCentralWidget(self.browser)
+
 
         #when mouse is hovered over any link
         self.browser.page().linkHovered.connect(self.if_link_hover)
@@ -48,8 +50,8 @@ class MainWindow(QMainWindow):
         tb2.addAction(nx_btn)
 
         ib_btn = QAction(QIcon("iconos/hbo.png"), "HBO GO", self)
-        ib_btn.setStatusTip("Go to HBO")
-        ib_btn.triggered.connect(lambda: self.conn("https://www.hbogola.com/landing"))
+        ib_btn.setStatusTip("Go to HBO") 
+        ib_btn.triggered.connect(lambda: self.conn("https://www.hbogola.com/landing"))      
         tb2.addAction(ib_btn)
         
         ib_btn = QAction(QIcon("iconos/disney.png"), "Disney Plus", self)
@@ -165,7 +167,6 @@ class MainWindow(QMainWindow):
     def new_winVideo(self):
         self.windo = VideoWindow()
         self.windo.show()
-        self.windo.resize(640, 480)
     
     def new_win(self):
         self 
@@ -177,7 +178,7 @@ class MainWindow(QMainWindow):
 
     #open home page
     def gohome(self):
-        self.browser.setUrl(QUrl("http://www.google.com"))
+        self.browser.load(QUrl.fromLocalFile(os.path.split(os.path.abspath(__file__))[0]+r'/index.html'))
 
     #user entered URL tasks
     def navigate_page(self):
