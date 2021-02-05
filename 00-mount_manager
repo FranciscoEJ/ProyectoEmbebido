@@ -1,0 +1,2 @@
+ACTION=="add",SUBSYSTEM=="block",KERNEL=="sd*[!0-9]",RUN+="/root/mount_manager/mount_manager add"
+ACTION=="remove",SUBSYSTEM=="block",KERNEL=="sd*[!0-9]",RUN+="/root/mount_manager/mount_manager remove"

@@ -1,0 +1,154 @@
+#!/bin/bash
+
+APP_DIR=/root/mount_manager
+LOG_DIR=$APP_DIR
+LOG_FILE="${LOG_DIR}/mount_manager.log"
+MOUNT_D=/media
+MOUNT_DIR=$MOUNT_D/
+
+log_private=true
+log_syslog=true
+
+user=root
+group=root
+
+arr_media_mounted=()
+arr_media_unmounted=()
+arr_plugged_in_path=()
+arr_plugged_in_label=()
+arr_plugged_in_type=()
+
+# function for mounting different file systems
+function mounter {
+    # $1 device path /dev/sd*
+    # $2 name or label of device
+    # $3 format or type
+
+    if [ "vfat" == "$3" ]; then
+        mount -t vfat -o utf8,uid=${user},gid=${group} $2 $MOUNT_DIR$1 >> $LOG_FILE 2>&1
+    fi
+        if [ "ntfs" == "$3" ]; then
+        nohup mount -t ntfs -o rw $2 $MOUNT_DIR$1 >> $LOG_FILE 2>&1 &
+    fi
+        if [ "hfsplus" == "$3" ]; then
+        mount -t hfsplus -o utf8,uid=${user},gid=${group} $2 $MOUNT_DIR$1 >> $LOG_FILE 2>&1 #not tested
+    fi
+        if [ "exfat" == "$3" ]; then
+        mount -t exfat -o utf8,uid=${user},gid=${group} $2 $MOUNT_DIR$1 >> $LOG_FILE 2>&1 #not tested
+    fi
+        if [ "ext4" == "$3" ]; then
+        mount -t ext4 -o defaults $2 $MOUNT_DIR$1 >> $LOG_FILE 2>&1
+    fi
+}
+
+# functions for loggin output
+function log {
+    if [ "$log_private" = true ] ; then
+        echo "$(date +"%Y.%m.%d %H:%M:%S") $1" >> $LOG_FILE
+    fi
+}
+function log_info {
+    log "INFO: $1"
+        if [ "$log_syslog" = true ] ; then
+        logger $1 -p info -t ${0#./}
+    fi
+}
+function log_warn {
+    log "WARNING: $1"
+        if [ "$log_syslog" = true ] ; then
+                logger $1 -p warning -t ${0#./}
+    fi
+}
+function log_err {
+        log "ERROR: $1"
+        if [ "$log_syslog" = true ] ; then
+                logger $1 -p error -t ${0#./}
+    fi
+}
+
+# backup log
+if [ "$(wc -l < $LOG_FILE)" -gt 200 ]; then
+    mv $LOG_FILE ${LOG_FILE}.1
+fi
+
+
+######################################################
+#
+#       start main routine
+
+log_info "========== mount_manager called by udev $1 =========="
+
+
+# get directories in mounting directory $MOUNT_DIR
+for dir in $(ls -1 "${MOUNT_D}"); do
+    if mount | grep $dir > /dev/null; then
+        arr_media_mounted+=(${dir#$MOUNT_DIR})
+    else
+        arr_media_unmounted+=(${dir#$MOUNT_DIR})
+    fi
+done
+
+
+# get plugged in devices
+regex='(/dev/sd[a-z][0-9]): (LABEL=\"([A-Za-z0-9_\-]+)\")?.*UUID=\"([a-zA-Z0-9\-]+)\".*TYPE=\"([a-zA-Z0-9]+)\"'
+while IFS= read -r line; do
+        if [[ $line =~ $regex ]];then
+                name="${BASH_REMATCH[1]}"
+                label="${BASH_REMATCH[3]}"
+                uuid="${BASH_REMATCH[4]}"
+                type="${BASH_REMATCH[5]}"
+                if [ -z "${label}" ];then
+                        label=${uuid}
+                fi
+                arr_plugged_in_path+=($name)
+                arr_plugged_in_label+=($label)
+                arr_plugged_in_type+=($type)
+        fi
+done < <(blkid)
+
+
+# check directories in /media yet not plugged in devices
+for mounted_item in ${arr_media_mounted[*]}
+do
+    if ! [[ " ${arr_plugged_in_label[*]} " == *" ${mounted_item} "* ]]; then
+        log_info "Mounted yet unplugged directory '${mounted_item}' found."
+        umount $MOUNT_DIR$mounted_item >> $LOG_FILE 2>&1
+        if ! [ "$(ls -A $MOUNT_DIR$mounted_item)" ]; then
+            log_info " - Directory now unmounted and empty and will be deleted."
+            rm -rf $MOUNT_DIR$mounted_item >> $LOG_FILE 2>&1
+        else
+            log_err " - Directory not empty. This should not happen after unmount. Please check '${$MOUNT_DIR$mounted_item}'"
+        fi
+    fi
+done
+for unmounted_item in ${arr_media_unmounted[*]}
+do
+        if ! [[ " ${arr_plugged_in_label[*]} " == *" ${unmounted_item} "* ]]; then
+                log_info "Unmounted and unplugged directory '${unmounted_item}' found."
+        if ! [ "$(ls -A $MOUNT_DIR$unmounted_item)" ]; then
+            log_info " - Directory is empty and will be deleted."
+            rm -rf $MOUNT_DIR$unmounted_item >> $LOG_FILE 2>&1
+        else
+            log_warn " - Directory not empty. No further action."
+        fi
+        fi
+done
+
+# check plugged in devices
+i=0
+for plugged_in_item in ${arr_plugged_in_label[*]}
+do
+    log_info "Plugged in device '${plugged_in_item}' will be checked."
+    if [[ " ${arr_media_mounted[*]} " == *" ${plugged_in_item} "* ]]; then
+        log_info " - Mounted device '${plugged_in_item}' found. Great."
+    else
+        if [[ " ${arr_media_unmounted[*]} " == *" ${plugged_in_item} "* ]]; then
+            log_info " - Unmounted yet plugged in device '${plugged_in_item}' found. It will be mounted."
+            else
+            log_info " - Newly plugged in device '${plugged_in_item}' found. Directory will be created and device will be mounted."
+            mkdir $MOUNT_DIR$plugged_in_item >> $LOG_FILE 2>&1
+        fi
+        mounter $plugged_in_item ${arr_plugged_in_path[i]} ${arr_plugged_in_type[i]}
+    fi
+    ((i++))
+done
