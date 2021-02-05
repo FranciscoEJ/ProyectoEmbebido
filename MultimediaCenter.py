@@ -166,6 +166,7 @@ class MainWindow(QMainWindow):
     #to open Video window
     def new_winVideo(self):
         self.windo = VideoWindow()
+        self.windo.resize(640, 480)
         self.windo.show()
     
     def new_win(self):

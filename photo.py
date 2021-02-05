@@ -1,11 +1,27 @@
 import sys
+import os
 from os import listdir
 from os.path import isfile, join
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap
 
-DEFAULT_IMAGE_ALBUM_DIRECTORY = './my-album/'
+## Search for the USB driver mounted
+for i in range(1,10):
+    if (os.path.exists('/media/usb'+str(i))):
+        DEFAULT_IMAGE_ALBUM_DIRECTORY = '/media/usb'+str(i)
+        break
+    else:
+        DEFAULT_IMAGE_ALBUM_DIRECTORY = './my-album/'
+
+#DEFAULT_IMAGE_ALBUM_DIRECTORY = './my-album/'
+
+##Search for the USB driver 
+def is_a_usb():
+    if (os.path.exists('/media/usb')):
+        DEFAULT_IMAGE_ALBUM_DIRECTORY = '/media/usb'
+    else:
+        DEFAULT_IMAGE_ALBUM_DIRECTORY = './my-album/'
 
 ## Check that a file name has a valid image extension for QPixmap
 def filename_has_image_extension(filename):
